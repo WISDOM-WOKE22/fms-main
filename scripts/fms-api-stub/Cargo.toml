@@ -1,0 +1,9 @@
+[package]
+name = "fms-api-stub"
+version = "0.1.0"
+edition = "2021"
+description = "Minimal Windows stub for fms-api when cross-building from non-Windows (real API built on Windows)"
+
+[[bin]]
+name = "fms-api-stub"
+path = "src/main.rs"

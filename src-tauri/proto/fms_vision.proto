@@ -1,0 +1,172 @@
+// FMS Vision Pipeline — gRPC service definition
+// Replaces REST/Base64 with raw byte buffers for zero-copy efficiency.
+//
+// Communication model:
+//   Python StreamProcessor → (server-streaming RPC) → Rust EventHandler
+//   Rust Orchestrator → (unary RPCs) → Python for registration/config
+//
+syntax = "proto3";
+package fms.vision;
+
+option java_package = "com.eglobalsphere.fms.vision";
+
+// ────────────────────────────────────────────────────────────────────
+// Shared types
+// ────────────────────────────────────────────────────────────────────
+
+message BoundingBox {
+  float x1 = 1;
+  float y1 = 2;
+  float x2 = 3;
+  float y2 = 4;
+}
+
+message Point2D {
+  double x = 1;
+  double y = 2;
+}
+
+message ZonePolygon {
+  string zone_id   = 1;
+  string zone_name = 2;
+  repeated Point2D vertices = 3;
+}
+
+// ────────────────────────────────────────────────────────────────────
+// Detection event — pushed from Python → Rust per tracked person
+// ────────────────────────────────────────────────────────────────────
+
+message DetectionEvent {
+  int64       track_id      = 1;   // ByteTrack persistent ID
+  string      person_id     = 2;   // faces.db person_id (empty if unknown)
+  string      person_name   = 3;
+  float       confidence    = 4;   // cosine similarity score
+  BoundingBox person_bbox   = 5;   // full-body bounding box
+  BoundingBox face_bbox     = 6;   // face bounding box (if detected)
+  bool        track_cached  = 7;   // true if identity came from cache (InsightFace skipped)
+  bool        is_reidentified = 8; // true if Re-ID buffer matched a lost track
+  string      zone_status   = 9;   // "inside", "outside", "entered", "exited"
+}
+
+// One frame's worth of detection results pushed to Rust.
+message FrameDetections {
+  string   stream_id        = 1;   // camera/stream identifier
+  string   zone_id          = 2;
+  uint64   frame_number     = 3;
+  double   timestamp_epoch  = 4;   // seconds since epoch (float)
+  repeated DetectionEvent detections = 5;
+  uint32   persons_detected = 6;
+  uint32   persons_identified = 7;
+  string   pipeline         = 8;   // e.g. "yolo26+bytetrack+insightface"
+  float    inference_ms     = 9;   // total inference time
+}
+
+// ────────────────────────────────────────────────────────────────────
+// Stream lifecycle
+// ────────────────────────────────────────────────────────────────────
+
+message StartStreamRequest {
+  string stream_id         = 1;
+  string rtsp_url          = 2;
+  string zone_id           = 3;
+  ZonePolygon zone_polygon = 4;    // polygon for in-zone detection
+  float  target_fps        = 5;    // desired processing FPS (default 1.0)
+  uint32 input_width       = 6;    // resize width before inference (default 960)
+  uint32 input_height      = 7;    // resize height before inference (default 540)
+  float  recognition_threshold = 8; // cosine similarity threshold (default 0.5)
+  uint32 max_persons       = 9;    // max persons per frame (default 5)
+}
+
+message StopStreamRequest {
+  string stream_id = 1;
+}
+
+message StreamStatusResponse {
+  string stream_id         = 1;
+  bool   running           = 2;
+  uint64 frames_processed  = 3;
+  uint64 persons_recognized = 4;
+  string error             = 5;    // empty if healthy
+  string worker_status     = 6;    // "running", "degraded", "fatal", "stopped"
+}
+
+// ────────────────────────────────────────────────────────────────────
+// Face registration (unary RPCs — Rust calls Python)
+// ────────────────────────────────────────────────────────────────────
+
+message RegisterFaceRequest {
+  string person_id   = 1;
+  string person_name = 2;
+  bytes  image_data  = 3;   // raw JPEG/PNG bytes (NOT base64)
+  float  quality_score = 4;
+}
+
+message RegisterFaceResponse {
+  string status  = 1;  // "registered", "invalid_image", "no_face", etc.
+  string message = 2;
+}
+
+message DeleteFaceRequest {
+  string person_id = 1;
+}
+
+message DeleteFaceResponse {
+  string status  = 1;
+  string message = 2;
+}
+
+// ────────────────────────────────────────────────────────────────────
+// Frame test (unary — Rust calls Python to test camera)
+// ────────────────────────────────────────────────────────────────────
+
+message TestCameraRequest {
+  string rtsp_url = 1;
+}
+
+message TestCameraResponse {
+  bool   reachable  = 1;
+  uint32 width      = 2;
+  uint32 height     = 3;
+  float  latency_ms = 4;
+  string error      = 5;
+}
+
+// ────────────────────────────────────────────────────────────────────
+// Health
+// ────────────────────────────────────────────────────────────────────
+
+message HealthRequest {}
+
+message HealthResponse {
+  string status           = 1;  // "ok", "degraded"
+  bool   insightface_ready = 2;
+  bool   yolo_ready        = 3;
+  bool   mediapipe_ready   = 4;
+  bool   tracker_ready     = 5;
+  uint32 active_streams    = 6;
+  uint32 total_tracks      = 7;
+  uint32 identified_tracks = 8;
+}
+
+// ────────────────────────────────────────────────────────────────────
+// Service definition
+// ────────────────────────────────────────────────────────────────────
+
+service VisionPipeline {
+  // ── Push model: Python streams detection events to Rust ──
+  // Client (Python) calls StartStream; server (Rust) receives a stream
+  // of FrameDetections for each processed frame.
+  rpc StreamDetections(StartStreamRequest) returns (stream FrameDetections);
+
+  // ── Lifecycle ──
+  rpc StopStream(StopStreamRequest) returns (StreamStatusResponse);
+  rpc GetStreamStatus(StopStreamRequest) returns (StreamStatusResponse);
+
+  // ── Face management (Rust → Python) ──
+  rpc RegisterFace(RegisterFaceRequest) returns (RegisterFaceResponse);
+  rpc DeleteFace(DeleteFaceRequest) returns (DeleteFaceResponse);
+
+  // ── Utilities ──
+  rpc TestCamera(TestCameraRequest) returns (TestCameraResponse);
+  rpc Health(HealthRequest) returns (HealthResponse);
+}

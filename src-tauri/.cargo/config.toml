@@ -1,0 +1,5 @@
+# Force target dir to be local to this package so tauri-build finds
+# the tauri crate's permission files in the correct path (avoids wrong
+# path like Eglobalsphere/FMS-main when a global target-dir is set).
+[build]
+target-dir = "target"

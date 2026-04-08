@@ -1,0 +1,60 @@
+import type { ZoneRow } from "../types";
+
+export const MOCK_ZONES: ZoneRow[] = [
+  {
+    id: "1",
+    name: "Main Gate",
+    assignedShifts: 3,
+    assignedEmployees: 5,
+    createdBy: "Admin",
+    status: "active",
+    dateCreated: "2024-01-10",
+    zones: [
+      { name: "Gate A", ip: "192.168.1.101", rtsp: "rtsp://192.168.1.101:554/stream1" },
+      { name: "Gate B", ip: "192.168.1.102", rtsp: "rtsp://192.168.1.102:554/stream1" },
+    ],
+  },
+  {
+    id: "2",
+    name: "Building A",
+    assignedShifts: 3,
+    assignedEmployees: 4,
+    createdBy: "Admin",
+    status: "active",
+    dateCreated: "2024-01-10",
+    zones: [{ name: "Lobby", ip: "192.168.1.103", rtsp: "rtsp://192.168.1.103:554/stream1" }],
+  },
+  {
+    id: "3",
+    name: "Building B",
+    assignedShifts: 3,
+    assignedEmployees: 3,
+    createdBy: "Sarah Chen",
+    status: "active",
+    dateCreated: "2024-02-15",
+    zones: [
+      { name: "Reception", ip: "192.168.1.104", rtsp: "" },
+      { name: "Back Hall", ip: "192.168.1.105", rtsp: "rtsp://192.168.1.105:554/stream1" },
+    ],
+  },
+  {
+    id: "4",
+    name: "Warehouse North",
+    assignedShifts: 2,
+    assignedEmployees: 0,
+    createdBy: "Admin",
+    status: "inactive",
+    dateCreated: "2024-03-01",
+    zones: [],
+  },
+  {
+    id: "5",
+    name: "Parking Lot",
+    assignedShifts: 1,
+    assignedEmployees: 1,
+    createdBy: "James Okonkwo",
+    status: "active",
+    dateCreated: "2024-06-20",
+    zones: [{ name: "Entry Lane", ip: "192.168.1.106", rtsp: "rtsp://192.168.1.106:554/stream1" }],
+  },
+];

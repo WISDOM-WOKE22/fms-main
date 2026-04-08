@@ -1,0 +1,4 @@
+[[permission]]
+identifier = "allow-seed-demo-data"
+description = "Allows the frontend to seed demo data (employees, zones, shifts, people logs) into the local database only."
+commands.allow = ["seed_demo_data"]

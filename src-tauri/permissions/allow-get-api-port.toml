@@ -1,0 +1,4 @@
+[[permission]]
+identifier = "allow-get-api-port"
+description = "Allows the frontend to get the dynamic API port from the backend."
+commands.allow = ["get_api_port"]

@@ -1,0 +1,16 @@
+# ByteTrack tracker configuration for YOLO26s + FMS stateful tracking
+# See: https://docs.ultralytics.com/modes/track/#tracker-selection
+
+tracker_type: bytetrack
+
+# Detection confidence thresholds
+track_high_thresh: 0.5       # High threshold for first association
+track_low_thresh: 0.1        # Low threshold for second association
+new_track_thresh: 0.6        # Threshold for initializing a new track
+
+# Track lifecycle
+track_buffer: 60             # Frames to keep lost tracks (at 1 FPS = ~60s buffer)
+match_thresh: 0.8            # Matching threshold for association
+
+# Motion model
+fuse_score: true             # Fuse detection confidence into matching cost

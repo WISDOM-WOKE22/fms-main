@@ -1,0 +1,162 @@
+// FMS - Facility Management System
+// Prisma Schema for SQLite
+// Run: pnpm prisma generate | pnpm prisma migrate dev
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Core models
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Admin {
+  id           String    @id @default(cuid())
+  name         String
+  email        String    @unique
+  role         String    // "super_admin" | "sub_admin"
+  status       String    // "active" | "inactive"
+  permissions  String    // JSON array of AdminPermissionKey
+  passwordHash String?   @map("password_hash") // hashed; null for env-based super admin
+  createdAt    DateTime  @default(now())
+  lastLoginAt  DateTime?
+
+  @@map("admins")
+}
+
+model Zone {
+  id         String   @id @default(cuid())
+  name       String
+  status     String   // "active" | "inactive"
+  cameraIds  String   // JSON array of camera IDs (max 2)
+  createdBy  String
+  dateCreated DateTime @default(now())
+
+  employees Employee[]
+
+  @@unique([name])
+  @@map("zones")
+}
+
+model Shift {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  breakTime   String
+  status      String   // "active" | "inactive"
+  createdBy   String
+  createdAt   DateTime @default(now())
+
+  employees Employee[]
+
+  @@map("shifts")
+}
+
+model Employee {
+  id         String   @id @default(cuid())
+  name       String
+  email      String?
+  phone      String?
+  department String?
+  status     String   // "checked-in" | "checked-out"
+  isActive   Boolean  @default(true)
+  joinedDate DateTime
+
+  zoneId  String
+  zone    Zone   @relation(fields: [zoneId], references: [id], onDelete: Restrict)
+  shiftId String
+  shift   Shift  @relation(fields: [shiftId], references: [id], onDelete: Restrict)
+
+  activities EmployeeActivity[]
+
+  @@map("employees")
+}
+
+model EmployeeActivity {
+  id         String   @id @default(cuid())
+  type       String   // "check-in" | "check-out"
+  date       DateTime
+  time       String
+  zoneId     String?
+  employeeId String
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@map("employee_activities")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Audit & access logging
+// ─────────────────────────────────────────────────────────────────────────────
+
+model AccessLog {
+  id         String   @id @default(cuid())
+  employeeId String?
+  zoneId     String?
+  action     String   // "check-in" | "check-out" | etc.
+  timestamp  DateTime @default(now())
+  metadata   String?  // JSON for extra context
+
+  @@map("access_logs")
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  actorId     String?
+  actorType   String?  // "admin" | "system"
+  actorName   String?  // Display name of who performed the action
+  action      String   // e.g. "create", "update", "delete", "check_in", "check_out"
+  resource    String   // "employee" | "zone" | "shift" | "admin" | "settings" | "recipient" | "report"
+  resourceId  String?
+  description String? // Human-readable summary of what happened
+  changes     String?  // JSON of before/after or extra context
+  timestamp   DateTime @default(now())
+
+  @@map("audit_logs")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// App settings (key-value, e.g. time_config for check-in/check-out windows)
+// ─────────────────────────────────────────────────────────────────────────────
+
+model AppSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value    String   // JSON string
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@map("app_settings")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Report recipients (email list for report delivery)
+// ─────────────────────────────────────────────────────────────────────────────
+
+model ReportRecipient {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  status    String   // "active" | "inactive"
+  addedById String?
+  addedByName String? // Display name of who added (e.g. "You" or admin name)
+  createdAt DateTime @default(now())
+
+  @@map("report_recipients")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Camera registry (for zone assignment)
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Camera {
+  id   String @id // Custom IDs (cam1, cam2, ...) for zone assignment
+  name String
+
+  @@unique([name])
+  @@map("cameras")
+}

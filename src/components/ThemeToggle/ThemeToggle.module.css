@@ -1,0 +1,66 @@
+.root {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--fms-glass-bg);
+  border: 1px solid var(--fms-glass-border);
+  border-radius: var(--fms-radius-lg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  cursor: pointer;
+  transition:
+    background var(--fms-duration-normal) var(--fms-ease),
+    border-color var(--fms-duration-normal) var(--fms-ease),
+    transform var(--fms-duration-fast) var(--fms-ease);
+}
+
+.root:hover {
+  background: var(--fms-surface-hover);
+  border-color: var(--fms-border);
+}
+
+.root:active {
+  transform: scale(0.98);
+}
+
+.track {
+  display: flex;
+  align-items: center;
+  width: 40px;
+  height: 22px;
+  padding: 2px;
+  background: var(--fms-bg-subtle);
+  border-radius: 11px;
+  transition: background var(--fms-duration-normal) var(--fms-ease);
+}
+
+.track[data-dark] {
+  background: var(--fms-accent-muted);
+}
+
+.thumb {
+  width: 18px;
+  height: 18px;
+  background: var(--fms-surface-solid);
+  border-radius: 50%;
+  box-shadow: var(--fms-shadow-sm);
+  transition: transform var(--fms-duration-normal) var(--fms-ease);
+}
+
+.track[data-dark] .thumb {
+  transform: translateX(18px);
+  background: var(--fms-accent);
+}
+
+.icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--fms-text-secondary);
+  transition: color var(--fms-duration-fast) var(--fms-ease);
+}
+
+.root:hover .icon {
+  color: var(--fms-text);
+}

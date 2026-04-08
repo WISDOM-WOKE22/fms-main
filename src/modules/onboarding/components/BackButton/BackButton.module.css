@@ -1,0 +1,16 @@
+.root {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 0;
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--fms-text-secondary);
+  cursor: pointer;
+  transition: color var(--fms-duration-fast) var(--fms-ease);
+}
+.root:hover:not(:disabled) { color: var(--fms-accent); }
+.root:disabled { cursor: not-allowed; opacity: 0.5; }

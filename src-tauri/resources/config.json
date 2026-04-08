@@ -1,0 +1,15 @@
+{
+  "FMS_EMAIL": "admin@eglobalsphere.com",
+  "FMS_PASSWORD": "changeme",
+  "FMS_LICENSE_KEY": "FMS-8A2B-4C9D-1E7F-3B6A",
+  "FMS_MAIN_BACKEND_URL": "http://localhost:8001",
+  "FMS_LICENSE_PUBLIC_KEY_PEM": "This_is_our_public_key_pem",
+  "FMS_LICENSE_ISSUER": "fms-main-backend",
+  "FMS_COMPANY_NAME": "EglobalSphere",
+  "FMS_COMPANY_IMAGE": "",
+  "FMS_SUPER_ADMIN_NAME": "Super Admin",
+  "FMS_ENV": "development",
+  "FMS_ALLOW_DEV_LICENSE_FALLBACK": "false",
+  "FMS_LICENSE_KEY_VERIFICATION_ENABLED": "false",
+  "BUILD_TIMESTAMP": "2026-04-07T18:14:57.579Z"
+}

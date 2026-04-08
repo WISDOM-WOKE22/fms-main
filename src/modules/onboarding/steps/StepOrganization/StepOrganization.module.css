@@ -1,0 +1,8 @@
+.form { display: flex; flex-direction: column; gap: 24px; width: 100%; }
+.description {
+  margin: 0 0 8px 0;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--fms-text-secondary);
+}
+.submit { margin-top: 8px; }

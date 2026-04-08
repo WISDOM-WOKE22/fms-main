@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>NSCameraUsageDescription</key>
+  <string>FMS uses camera access to register and recognize people during onboarding and attendance workflows.</string>
+  <key>NSMicrophoneUsageDescription</key>
+  <string>FMS may request microphone access for camera capture compatibility on some devices.</string>
+</dict>
+</plist>

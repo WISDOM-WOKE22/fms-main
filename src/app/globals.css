@@ -1,0 +1,314 @@
+@import "tailwindcss";
+@import "../core/styles/tokens.css";
+
+@theme {
+  /* FMS theme-aware tokens (values from tokens.css per data-theme) */
+  --color-fms-bg: var(--fms-bg);
+  --color-fms-bg-subtle: var(--fms-bg-subtle);
+  --color-fms-surface: var(--fms-surface-solid);
+  --color-fms-surface-hover: var(--fms-surface-hover);
+  --color-fms-text: var(--fms-text);
+  --color-fms-text-secondary: var(--fms-text-secondary);
+  --color-fms-text-tertiary: var(--fms-text-tertiary);
+  --color-fms-border: var(--fms-border);
+  --color-fms-border-strong: var(--fms-border-strong);
+  --color-fms-glass-bg: var(--fms-glass-bg);
+  --color-fms-glass-border: var(--fms-glass-border);
+  --color-fms-accent: var(--fms-accent);
+  --color-fms-accent-hover: var(--fms-accent-hover);
+  --color-fms-accent-muted: var(--fms-accent-muted);
+  --radius-fms-sm: var(--fms-radius-sm);
+  --radius-fms-md: var(--fms-radius-md);
+  --radius-fms-lg: var(--fms-radius-lg);
+  --radius-fms-xl: var(--fms-radius-xl);
+  --radius-fms-2xl: var(--fms-radius-2xl);
+}
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.5;
+    background-color: var(--fms-bg);
+    color: var(--fms-text);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-fms-accent);
+    outline-offset: 2px;
+  }
+
+  button:focus:not(:focus-visible),
+  a:focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  /* Action buttons: pointer cursor app-wide */
+  button:not(:disabled),
+  [role="button"] {
+    cursor: pointer;
+  }
+
+  button:disabled {
+    cursor: not-allowed;
+  }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.3s ease both;
+}
+
+@keyframes add-btn-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.add-employee-btn {
+  animation: add-btn-enter 0.4s var(--fms-ease, ease-out) both;
+}
+
+.add-employee-btn:hover {
+  transform: translateY(-2px);
+}
+
+.add-employee-btn:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* App content and table spacing — clean, consistent padding for all tables */
+[data-fms-root] main table th,
+[data-fms-root] main table td {
+  padding: 1rem 1.25rem !important;
+}
+
+/* Consistent input/select/textarea — same background and text color app-wide */
+[data-fms-root] input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="image"]),
+[data-fms-root] select,
+[data-fms-root] textarea {
+  background-color: var(--fms-surface-solid) !important;
+  color: var(--fms-text) !important;
+}
+
+[data-fms-root] input:disabled:not([type="checkbox"]):not([type="radio"]),
+[data-fms-root] select:disabled,
+[data-fms-root] textarea:disabled {
+  background-color: var(--fms-bg-subtle) !important;
+  color: var(--fms-text) !important;
+}
+
+/* Status toggle group (Active/Inactive) — consistent app-wide */
+.fms-status-toggle-group {
+  display: inline-flex;
+  padding: 0.25rem;
+  border-radius: var(--fms-radius-2xl);
+  background: var(--fms-bg-subtle);
+  border: 1px solid var(--fms-border);
+}
+
+.fms-status-toggle-btn {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--fms-text-secondary);
+  background: transparent;
+  border: none;
+  border-radius: var(--fms-radius-xl);
+  cursor: pointer;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.fms-status-toggle-btn:hover {
+  color: var(--fms-text);
+  background: var(--fms-surface);
+}
+
+.fms-status-toggle-btn:focus-visible {
+  outline: 2px solid var(--fms-accent);
+  outline-offset: 2px;
+}
+
+.fms-status-toggle-btn-active {
+  color: #fff;
+  background: var(--fms-accent);
+}
+
+.fms-status-toggle-btn-active:hover {
+  background: var(--fms-accent-hover);
+}
+
+/* Switch toggle (pill with thumb) — consistent app-wide */
+.fms-switch {
+  position: relative;
+  width: 2.75rem;
+  height: 1.5rem;
+  flex-shrink: 0;
+  background: var(--fms-bg-subtle);
+  border: 1px solid var(--fms-border);
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.fms-switch[data-checked="true"] {
+  background: var(--fms-accent);
+  border-color: var(--fms-accent);
+}
+
+.fms-switch:disabled {
+  cursor: default;
+  opacity: 0.85;
+}
+
+.fms-switch-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: calc(1.5rem - 4px);
+  height: calc(1.5rem - 4px);
+  background: white;
+  border-radius: 50%;
+  box-shadow: var(--fms-shadow-sm);
+  transition: transform 0.2s ease;
+}
+
+.fms-switch[data-checked="true"] .fms-switch-thumb {
+  transform: translateX(1.25rem);
+}
+
+/* Toggle row container (for switch toggles) — consistent app-wide */
+.fms-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--fms-radius-2xl);
+  background: var(--fms-bg-subtle);
+  border: 1px solid var(--fms-border);
+  margin-bottom: 0.5rem;
+  transition: border-color 0.2s ease;
+}
+
+.fms-toggle-row:last-child {
+  margin-bottom: 0;
+}
+
+.fms-toggle-row:hover {
+  border-color: var(--fms-border-strong);
+}
+
+/* RTL: ensure text and layout flow correctly when dir="rtl" (e.g. Arabic) */
+[dir="rtl"] {
+  text-align: right;
+}
+
+/* ——— Global toast notifications (Sonner) ——— */
+/* Top-right, colorful by action type: success green, error red, warning amber, info blue */
+[data-sonner-toaster] {
+  --success-bg: rgba(16, 185, 129, 0.12);
+  --success-border: rgba(16, 185, 129, 0.4);
+  --success-text: #059669;
+  --error-bg: rgba(239, 68, 68, 0.12);
+  --error-border: rgba(239, 68, 68, 0.4);
+  --error-text: #dc2626;
+  --warning-bg: rgba(245, 158, 11, 0.12);
+  --warning-border: rgba(245, 158, 11, 0.4);
+  --warning-text: #d97706;
+  --info-bg: rgba(59, 130, 246, 0.12);
+  --info-border: rgba(59, 130, 246, 0.4);
+  --info-text: #2563eb;
+}
+
+[data-theme="dark"] [data-sonner-toaster] {
+  --success-bg: rgba(16, 185, 129, 0.18);
+  --success-border: rgba(16, 185, 129, 0.5);
+  --success-text: #34d399;
+  --error-bg: rgba(239, 68, 68, 0.18);
+  --error-border: rgba(239, 68, 68, 0.5);
+  --error-text: #f87171;
+  --warning-bg: rgba(245, 158, 11, 0.18);
+  --warning-border: rgba(245, 158, 11, 0.5);
+  --warning-text: #fbbf24;
+  --info-bg: rgba(59, 130, 246, 0.18);
+  --info-border: rgba(59, 130, 246, 0.5);
+  --info-text: #60a5fa;
+}
+
+[data-sonner-toast][data-type="success"] {
+  background: var(--success-bg) !important;
+  border-color: var(--success-border) !important;
+  color: var(--success-text) !important;
+}
+
+[data-sonner-toast][data-type="success"] [data-title],
+[data-sonner-toast][data-type="success"] [data-description] {
+  color: inherit !important;
+}
+
+[data-sonner-toast][data-type="error"] {
+  background: var(--error-bg) !important;
+  border-color: var(--error-border) !important;
+  color: var(--error-text) !important;
+}
+
+[data-sonner-toast][data-type="error"] [data-title],
+[data-sonner-toast][data-type="error"] [data-description] {
+  color: inherit !important;
+}
+
+[data-sonner-toast][data-type="warning"] {
+  background: var(--warning-bg) !important;
+  border-color: var(--warning-border) !important;
+  color: var(--warning-text) !important;
+}
+
+[data-sonner-toast][data-type="warning"] [data-title],
+[data-sonner-toast][data-type="warning"] [data-description] {
+  color: inherit !important;
+}
+
+[data-sonner-toast][data-type="info"] {
+  background: var(--info-bg) !important;
+  border-color: var(--info-border) !important;
+  color: var(--info-text) !important;
+}
+
+[data-sonner-toast][data-type="info"] [data-title],
+[data-sonner-toast][data-type="info"] [data-description] {
+  color: inherit !important;
+}
+
+/* Smooth enter/exit — use sonner’s default animation, ensure no jank */
+[data-sonner-toast] {
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}

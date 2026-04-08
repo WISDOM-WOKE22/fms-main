@@ -1,0 +1,2 @@
+# FFmpeg binaries are downloaded at build time — don't commit them (70-100MB each)
+ffmpeg-*

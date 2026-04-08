@@ -1,0 +1,9 @@
+pub mod admins;
+pub mod auth;
+pub mod camera_ai;
+pub mod event_handler;
+pub mod face;
+pub mod face_enrollment;
+pub mod onboarding;
+pub mod rest;
+pub mod stream;

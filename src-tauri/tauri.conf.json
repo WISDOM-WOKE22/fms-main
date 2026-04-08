@@ -1,0 +1,59 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "fms-main",
+  "version": "0.1.0",
+  "identifier": "com.wisdom.fms-main",
+  "build": {
+    "beforeDevCommand": "pnpm dev:webpack",
+    "devUrl": "http://localhost:3000",
+    "beforeBuildCommand": "node scripts/download-ffmpeg.js --optional && node scripts/generate-build-config.js && pnpm run build:tauri:frontend",
+    "frontendDist": "../out"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "fms-main",
+        "width": 1200,
+        "height": 800,
+        "label": "main"
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self' asset: https://asset.localhost; connect-src 'self' http://127.0.0.1:* http://localhost:* http://127.0.0.1 http://localhost https://cdn.jsdelivr.net https://unpkg.com; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' asset: data: blob:; media-src 'self' blob: data:",
+      "assetProtocol": {
+        "enable": true,
+        "scope": [
+          "$RESOURCE/**"
+        ]
+      }
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "externalBin": [
+      "bin/ffmpeg"
+    ],
+    "resources": [
+      "resources/config.json",
+      "resources/ai-python/ai_service.py",
+      "resources/ai-python/requirements.txt",
+      "resources/ai-python/bytetrack.yaml",
+      "resources/ai-python/convert_yolo.py",
+      "resources/ai-python/models/yolo26s.onnx"
+    ],
+    "shortDescription": "FMS Desktop - Facility Management System",
+    "longDescription": "FMS Desktop application. Facility Management System with in-process API, SQLite database, and full desktop features.",
+    "category": "Business",
+    "macOS": {
+      "infoPlist": "Info.plist"
+    }
+  }
+}

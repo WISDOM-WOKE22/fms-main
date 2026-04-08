@@ -1,0 +1,13 @@
+.wrapper { width: 100%; }
+.track {
+  height: 4px;
+  background: var(--ob-progress-track, var(--fms-bg-subtle));
+  border-radius: 2px;
+  overflow: hidden;
+}
+.fill {
+  height: 100%;
+  background: var(--ob-progress-fill, var(--fms-accent));
+  border-radius: 2px;
+  transition: width 0.35s cubic-bezier(0.25, 0.1, 0.25, 1);
+}

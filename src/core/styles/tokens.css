@@ -1,0 +1,56 @@
+/**
+ * FMS Design Tokens — core
+ * Light and dark themes; minimal gradients, curved corners, glass where needed.
+ */
+
+:root,
+[data-theme="light"] {
+  --fms-bg: #f5f5f7;
+  --fms-bg-subtle: #e8e8ed;
+  --fms-surface: rgba(255, 255, 255, 0.72);
+  --fms-surface-solid: #ffffff;
+  --fms-surface-hover: rgba(255, 255, 255, 0.88);
+  --fms-text: #1d1d1f;
+  --fms-text-secondary: #6e6e73;
+  --fms-text-tertiary: #86868b;
+  --fms-border: rgba(0, 0, 0, 0.08);
+  --fms-border-strong: rgba(0, 0, 0, 0.12);
+  --fms-glass-bg: rgba(255, 255, 255, 0.65);
+  --fms-glass-border: rgba(255, 255, 255, 0.4);
+  --fms-accent: #0071e3;
+  --fms-accent-hover: #0077ed;
+  --fms-accent-muted: rgba(0, 113, 227, 0.12);
+  --fms-radius-sm: 10px;
+  --fms-radius-md: 14px;
+  --fms-radius-lg: 20px;
+  --fms-radius-xl: 24px;
+  --fms-radius-2xl: 1rem; /* 16px - default for cards, buttons, inputs, tables */
+  --fms-ease: cubic-bezier(0.25, 0.1, 0.25, 1);
+  --fms-duration-fast: 0.2s;
+  --fms-duration-normal: 0.35s;
+  --fms-duration-slow: 0.5s;
+  --fms-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+  --fms-shadow-md: 0 4px 24px rgba(0, 0, 0, 0.06);
+  --fms-shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="dark"] {
+  --fms-bg: #000000;
+  --fms-bg-subtle: #1d1d1f;
+  --fms-surface: rgba(29, 29, 31, 0.72);
+  --fms-surface-solid: #1d1d1f;
+  --fms-surface-hover: rgba(44, 44, 46, 0.88);
+  --fms-text: #f5f5f7;
+  --fms-text-secondary: #a1a1a6;
+  --fms-text-tertiary: #6e6e73;
+  --fms-border: rgba(255, 255, 255, 0.08);
+  --fms-border-strong: rgba(255, 255, 255, 0.12);
+  --fms-glass-bg: rgba(29, 29, 31, 0.72);
+  --fms-glass-border: rgba(255, 255, 255, 0.08);
+  --fms-accent: #2997ff;
+  --fms-accent-hover: #4da3ff;
+  --fms-accent-muted: rgba(41, 151, 255, 0.18);
+  --fms-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --fms-shadow-md: 0 4px 24px rgba(0, 0, 0, 0.4);
+  --fms-shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.5);
+}

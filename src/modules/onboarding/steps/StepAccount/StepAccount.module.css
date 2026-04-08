@@ -1,0 +1,26 @@
+.form { display: flex; flex-direction: column; gap: 20px; width: 100%; }
+.title {
+  margin: 0 0 8px 0;
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ob-title);
+  line-height: 1.2;
+}
+.subtitle {
+  margin: 0 0 28px 0;
+  font-size: 0.9375rem;
+  line-height: 1.45;
+  color: var(--ob-subtitle);
+}
+.field { margin: 0; }
+.nextButton {
+  margin-top: 12px;
+  background: var(--ob-next-bg) !important;
+  color: var(--ob-next-text) !important;
+  border-radius: var(--fms-radius-2xl);
+}
+.nextButton:hover:not(:disabled) {
+  background: var(--ob-next-hover) !important;
+  color: var(--ob-next-text) !important;
+}

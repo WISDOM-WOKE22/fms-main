@@ -1,0 +1,19 @@
+.bar {
+  height: 38px;
+  background: #2d2d30;
+  display: flex;
+  align-items: center;
+  padding-left: 14px;
+  flex-shrink: 0;
+}
+.dots { display: flex; gap: 8px; }
+.dotRed,
+.dotYellow,
+.dotGreen {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+.dotRed { background: #ff5f57; }
+.dotYellow { background: #febc2e; }
+.dotGreen { background: #28c840; }

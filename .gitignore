@@ -1,0 +1,79 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# pnpm store
+.pnpm-store/
+
+# node modules
+node_modules
+dist
+dist-ssr
+.next
+out
+*.local
+.pnpm-store
+.pnpm-debug.log
+
+# Environment
+.env
+.env.local
+.env.*.local
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Prisma
+prisma/*.db
+prisma/*.db-journal
+
+# AI service local database (must not live in source tree in production;
+# kept here only as fallback when FMS_AI_DATA_DIR is unset)
+src-tauri/resources/ai-python/faces.db
+src-tauri/resources/ai-python/faces.db-shm
+src-tauri/resources/ai-python/faces.db-wal
+
+# YOLO model weights (large binary files — keep .pt source, .onnx is derived)
+src-tauri/resources/ai-python/models/*.onnx
+src-tauri/resources/ai-python/models/*.pt
+src-tauri/resources/ai-python/*.onnx
+
+# target directory
+target/
+src-tauri/target/
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# out directory
+out/
+
+# .next directory
+.next/
+
+# .env file
+.env
+
+# .env.local file
+.env.local
+
+#python venv
+src-tauri/resources/ai-python/.venv/
+.venv
+
+# MediaPipe runtime assets (copied from node_modules at dev/build time)
+public/mediapipe/
