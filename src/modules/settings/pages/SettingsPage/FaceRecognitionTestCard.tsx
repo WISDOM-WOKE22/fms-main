@@ -371,43 +371,73 @@ export default function FaceRecognitionTestCard() {
 
   const modalContent = modalOpen ? (
     <div
-      className="fixed inset-0 z-1000 bg-black/45 backdrop-blur-[2px]"
+      className="fixed inset-0 z-1000 bg-slate-950/60 backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
       aria-labelledby="recognition-test-modal-title"
       onClick={(event) => { if (event.target === event.currentTarget) setModalOpen(false); }}
     >
-      <div className="absolute left-1/2 top-1/2 w-[calc(100vw-2rem)] max-w-5xl max-h-[88vh] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-fms-border bg-fms-surface shadow-[0_24px_70px_rgba(0,0,0,0.35)] overflow-hidden">
-        <div className="px-5 py-4 border-b border-fms-border flex items-start justify-between gap-3 bg-fms-surface">
-          <div>
-            <h3 id="recognition-test-modal-title" className="m-0 text-base font-semibold text-fms-text">
-              {t("faceRecognition.modalTitle")}
-            </h3>
-            <p className="m-0 mt-1 text-sm text-fms-text-secondary">
-              {t("faceRecognition.modalSubtitle")}
-            </p>
+      <div className="absolute left-1/2 top-1/2 w-[calc(100vw-1.5rem)] max-w-6xl max-h-[90vh] -translate-x-1/2 -translate-y-1/2 rounded-3xl border border-fms-border/80 bg-fms-surface shadow-[0_30px_90px_rgba(0,0,0,0.45)] overflow-hidden">
+        <div className="relative px-6 py-5 border-b border-fms-border bg-linear-to-r from-fms-bg-subtle/80 via-fms-surface to-fms-bg-subtle/40">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h3 id="recognition-test-modal-title" className="m-0 text-lg font-semibold text-fms-text flex items-center gap-2">
+                <span className="inline-flex items-center justify-center rounded-xl bg-fms-accent/15 text-fms-accent p-2">
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M15 8h.01M9 8h.01M8 13s1.5 2 4 2 4-2 4-2" strokeLinecap="round" />
+                    <rect x="3" y="3" width="18" height="18" rx="5" />
+                  </svg>
+                </span>
+                {t("faceRecognition.modalTitle")}
+              </h3>
+              <p className="m-0 mt-1 text-sm text-fms-text-secondary">
+                {t("faceRecognition.modalSubtitle")}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setModalOpen(false)}
+              className="inline-flex items-center justify-center rounded-xl border border-fms-border px-3 py-1.5 text-sm text-fms-text-secondary hover:bg-fms-bg-subtle transition-colors shrink-0"
+            >
+              {t("faceRecognition.close")}
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={() => setModalOpen(false)}
-            className="inline-flex items-center justify-center rounded-xl border border-fms-border px-3 py-1.5 text-sm text-fms-text-secondary hover:bg-fms-bg-subtle transition-colors"
-          >
-            {t("faceRecognition.close")}
-          </button>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-fms-border px-2.5 py-1 text-xs text-fms-text-secondary">
+              <span className={`w-2 h-2 rounded-full ${running ? "bg-emerald-500" : "bg-fms-text-tertiary"}`} />
+              {running ? t("faceRecognition.recognizing") : t("faceRecognition.noResultYet")}
+            </span>
+            {lastUpdated && (
+              <span className="inline-flex items-center rounded-full border border-fms-border px-2.5 py-1 text-xs text-fms-text-secondary">
+                {t("faceRecognition.lastUpdate")}: {new Date(lastUpdated).toLocaleTimeString()}
+              </span>
+            )}
+            {result?.pipeline && (
+              <span className="inline-flex items-center rounded-full border border-fms-border px-2.5 py-1 text-xs text-fms-text-secondary">
+                {result.pipeline}
+              </span>
+            )}
+          </div>
         </div>
 
-        <div className="p-5 h-[calc(88vh-4.5rem)] grid grid-cols-1 xl:grid-cols-[1.6fr_1fr] gap-5 overflow-hidden">
+        <div className="p-5 h-[calc(90vh-7.5rem)] grid grid-cols-1 xl:grid-cols-[1.65fr_1fr] gap-5 overflow-hidden">
           <div className="min-h-0">
-            <div className="relative rounded-2xl overflow-hidden border border-fms-border bg-fms-bg-subtle min-h-64">
-              <video ref={videoRef} autoPlay muted playsInline className="w-full h-[46vh] object-cover bg-slate-900" />
+            <div className="relative rounded-2xl overflow-hidden border border-fms-border bg-slate-950 min-h-64">
+              <video ref={videoRef} autoPlay muted playsInline className="w-full h-[48vh] object-cover bg-slate-950" />
               <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none" />
               {!cameraReady && (
-                <div className="absolute inset-0 flex items-center justify-center text-sm text-fms-text-secondary p-4 text-center">
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-sm text-fms-text-secondary p-4 text-center bg-slate-900/70">
+                  <span className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 p-3 mb-3">
+                    <svg className="w-5 h-5 text-white/70" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M15 10l4.553-2.276A1 1 0 0 1 21 8.618v6.764a1 1 0 0 1-1.447.894L15 14" />
+                      <rect x="3" y="6" width="12" height="12" rx="2" />
+                    </svg>
+                  </span>
                   {cameraError ?? t("faceRecognition.cameraPlaceholder")}
                 </div>
               )}
             </div>
-            <div className="mt-4 flex flex-wrap items-center gap-3">
+            <div className="mt-4 flex flex-wrap items-center gap-2.5">
               {!running ? (
                 <button
                   type="button"
@@ -426,37 +456,43 @@ export default function FaceRecognitionTestCard() {
                 </button>
               )}
               {isRecognizing && (
-                <span className="text-sm text-fms-text-secondary">{t("faceRecognition.recognizing")}</span>
-              )}
-              {lastUpdated && (
-                <span className="text-xs text-fms-text-tertiary">
-                  {t("faceRecognition.lastUpdate")}: {new Date(lastUpdated).toLocaleTimeString()}
+                <span className="inline-flex items-center gap-2 rounded-xl border border-fms-border px-3 py-2 text-sm text-fms-text-secondary">
+                  <span className="w-2 h-2 rounded-full bg-fms-accent animate-pulse" />
+                  {t("faceRecognition.recognizing")}
                 </span>
               )}
             </div>
-            <div className="mt-3 rounded-xl border border-fms-border bg-fms-bg-subtle/40 px-3 py-2">
+            <div className="mt-3 rounded-xl border border-fms-border bg-fms-bg-subtle/40 px-3 py-2.5">
               <p className="m-0 text-sm text-fms-text">{statusView}</p>
             </div>
           </div>
 
           <div className="min-h-0">
-            <div className="rounded-2xl border border-fms-border bg-fms-bg-subtle/20 h-full flex flex-col">
-              <div className="px-4 py-3 border-b border-fms-border">
+            <div className="rounded-2xl border border-fms-border bg-fms-bg-subtle/20 h-full flex flex-col overflow-hidden">
+              <div className="px-4 py-3 border-b border-fms-border bg-fms-surface/70">
                 <p className="m-0 text-sm font-semibold text-fms-text">
                   {t("faceRecognition.identifiedPersons")} ({seenPersons.length})
                 </p>
               </div>
-              <div className="flex-1 min-h-0 overflow-y-auto p-3 space-y-2">
+              <div className="flex-1 min-h-0 overflow-y-auto p-3 space-y-2.5">
                 {seenPersons.length === 0 ? (
                   <p className="m-0 text-sm text-fms-text-secondary px-1 py-2">
                     {t("faceRecognition.noPersonYet")}
                   </p>
                 ) : (
                   seenPersons.map((person) => (
-                    <div key={person.personId} className="rounded-xl border border-fms-border bg-fms-surface px-3 py-2">
-                      <p className="m-0 text-sm font-semibold text-fms-text">{person.name}</p>
+                    <div key={person.personId} className="rounded-xl border border-fms-border bg-fms-surface px-3 py-2.5 shadow-sm">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="m-0 text-sm font-semibold text-fms-text">{person.name}</p>
+                        <span className="inline-flex items-center rounded-full bg-emerald-500/10 text-emerald-500 px-2 py-0.5 text-[11px] font-semibold">
+                          {person.score.toFixed(3)}
+                        </span>
+                      </div>
                       <p className="m-0 mt-0.5 text-xs text-fms-text-secondary">
-                        {t("faceRecognition.personId")}: {person.personId} &bull; {t("faceRecognition.bestScore")}: {person.score.toFixed(3)} &bull; {t("faceRecognition.sightings")}: {person.sightings}
+                        {t("faceRecognition.personId")}: {person.personId}
+                      </p>
+                      <p className="m-0 mt-0.5 text-xs text-fms-text-secondary">
+                        {t("faceRecognition.sightings")}: {person.sightings}
                       </p>
                       <p className="m-0 mt-0.5 text-xs text-fms-text-tertiary">
                         {t("faceRecognition.lastSeen")}: {new Date(person.lastSeenAt).toLocaleTimeString()}

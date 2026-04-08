@@ -724,6 +724,58 @@ const DEMO_LAST: &[&str] = &[
     "Rodriguez", "Martinez", "Hernandez", "Lopez", "Gonzalez", "Wilson", "Anderson",
 ];
 const DEMO_DEPARTMENTS: &[&str] = &["Operations", "Security", "Facilities", "HR", "IT", "Reception", "Maintenance"];
+const ADMIN_PERMISSIONS_ALL: &[&str] = &[
+    "dashboard",
+    "employees",
+    "accessLogs",
+    "auditLogs",
+    "zones",
+    "shifts",
+    "admins",
+    "reports",
+];
+const DEMO_ADMINS: &[(&str, &str, &str, &str, &[&str])] = &[
+    (
+        "Alex Morgan",
+        "alex.morgan@company.com",
+        "super_admin",
+        "active",
+        ADMIN_PERMISSIONS_ALL,
+    ),
+    (
+        "Jordan Lee",
+        "jordan.lee@company.com",
+        "sub_admin",
+        "active",
+        &["dashboard", "employees", "zones", "shifts", "reports"],
+    ),
+    (
+        "Samira Hassan",
+        "samira.hassan@company.com",
+        "sub_admin",
+        "active",
+        &["dashboard", "employees", "accessLogs", "auditLogs"],
+    ),
+    (
+        "Chris Park",
+        "chris.park@company.com",
+        "sub_admin",
+        "inactive",
+        &["dashboard", "reports"],
+    ),
+];
+const DEMO_REPORT_RECIPIENTS: &[(&str, &str, &str, &str)] = &[
+    ("Finance Team", "finance@company.com", "active", "Alex Morgan"),
+    ("HR Operations", "hr-ops@company.com", "active", "Jordan Lee"),
+    ("Operations Lead", "ops.lead@company.com", "active", "Alex Morgan"),
+    ("Compliance", "compliance@company.com", "inactive", "Samira Hassan"),
+    (
+        "Executive Summary",
+        "exec-reports@company.com",
+        "active",
+        "Alex Morgan",
+    ),
+];
 
 fn demo_sub_zones_for_location(location_name: &str) -> Vec<JsonValue> {
     let names: &[&str] = match location_name {
@@ -932,6 +984,50 @@ pub fn seed_demo_data(conn: &Connection) -> Result<DemoSeedResult, rusqlite::Err
         result.employees += 1;
     }
 
+    // 5b) Seed admins used by admin screens (upsert by email, preserve password_hash).
+    for (idx, (name, email, role, status, permissions)) in DEMO_ADMINS.iter().enumerate() {
+        let permissions_json = serde_json::to_string(permissions).unwrap_or_else(|_| "[]".to_string());
+        let created_at = (now - chrono::Duration::days((idx as i64 + 1) * 12)).to_rfc3339();
+        let last_login_at = (now - chrono::Duration::hours((idx as i64 + 1) * 7)).to_rfc3339();
+        let exists: i32 = conn.query_row(
+            "SELECT COUNT(1) FROM admins WHERE LOWER(email) = LOWER(?1)",
+            params![email],
+            |r| r.get(0),
+        )?;
+        if exists == 0 {
+            conn.execute(
+                "INSERT INTO admins (id, name, email, role, status, permissions, createdAt, lastLoginAt) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+                params![gen_id(), name, email, role, status, permissions_json, created_at, last_login_at],
+            )?;
+        } else {
+            conn.execute(
+                "UPDATE admins SET name = ?1, role = ?2, status = ?3, permissions = ?4, createdAt = COALESCE(createdAt, ?5), lastLoginAt = ?6 WHERE LOWER(email) = LOWER(?7)",
+                params![name, role, status, permissions_json, created_at, last_login_at, email],
+            )?;
+        }
+    }
+
+    // 5c) Seed report recipients used in Reports screens.
+    for (idx, (name, email, status, added_by_name)) in DEMO_REPORT_RECIPIENTS.iter().enumerate() {
+        let created_at = (now - chrono::Duration::days((idx as i64 + 1) * 10)).to_rfc3339();
+        let exists: i32 = conn.query_row(
+            "SELECT COUNT(1) FROM report_recipients WHERE LOWER(email) = LOWER(?1)",
+            params![email],
+            |r| r.get(0),
+        )?;
+        if exists == 0 {
+            conn.execute(
+                "INSERT INTO report_recipients (id, name, email, status, addedByName, createdAt) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+                params![gen_id(), name, email, status, added_by_name, created_at],
+            )?;
+        } else {
+            conn.execute(
+                "UPDATE report_recipients SET name = ?1, status = ?2, addedByName = ?3 WHERE LOWER(email) = LOWER(?4)",
+                params![name, status, added_by_name, email],
+            )?;
+        }
+    }
+
     let mut schedule_name_by_id = std::collections::HashMap::<String, String>::new();
     {
         let mut schedule_stmt = conn.prepare("SELECT id, name FROM schedules")?;
@@ -1018,6 +1114,138 @@ pub fn seed_demo_data(conn: &Connection) -> Result<DemoSeedResult, rusqlite::Err
                 )?;
                 result.activities += 1;
             }
+        }
+    }
+
+    // 7) Lightweight AI tracking events so Access Logs tracking tab is populated.
+    let mut has_tracking_stmt = conn.prepare("SELECT COUNT(1) FROM access_logs WHERE provider = 'ai-tracking'")?;
+    let existing_tracking: i32 = has_tracking_stmt.query_row([], |r| r.get(0))?;
+    if existing_tracking == 0 {
+        let mut employee_name_by_id = std::collections::HashMap::<String, String>::new();
+        {
+            let mut stmt = conn.prepare("SELECT id, name FROM employees")?;
+            let rows = stmt.query_map([], |r| Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?)))?;
+            for row in rows {
+                let (id, name) = row?;
+                employee_name_by_id.insert(id, name);
+            }
+        }
+        for (idx, (emp_id, zone_id, _)) in employees_for_logs.iter().take(8).enumerate() {
+            let zone_id = zone_id.clone().unwrap_or_else(|| zone_ids[idx % zone_ids.len()].clone());
+            let to_zone_id = zone_ids[(idx + 1) % zone_ids.len()].clone();
+            let created_at = (now - chrono::Duration::minutes((idx as i64 + 1) * 17)).to_rfc3339();
+            let person_name = employee_name_by_id
+                .get(emp_id)
+                .cloned()
+                .unwrap_or_else(|| "Unknown".to_string());
+            let action = if idx % 3 == 0 {
+                "zone-entry"
+            } else if idx % 3 == 1 {
+                "zone-transition"
+            } else {
+                "zone-exit"
+            };
+            let metadata = match action {
+                "zone-transition" => json!({
+                    "trackId": (idx as i64) + 1001,
+                    "fromZoneId": zone_id,
+                    "toZoneId": to_zone_id,
+                    "source": "demo_seed"
+                }),
+                "zone-exit" => json!({
+                    "trackId": (idx as i64) + 1001,
+                    "fromZoneId": zone_id,
+                    "source": "demo_seed"
+                }),
+                _ => json!({
+                    "trackId": (idx as i64) + 1001,
+                    "toZoneId": zone_id,
+                    "source": "demo_seed"
+                }),
+            };
+            conn.execute(
+                "INSERT INTO access_logs (id, personId, personName, action, zoneId, cameraId, confidence, provider, metadata, createdAt) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, 'ai-tracking', ?8, ?9)",
+                params![
+                    gen_id(),
+                    emp_id,
+                    person_name,
+                    action,
+                    zone_id,
+                    format!("cam-{}", (idx % 4) + 1),
+                    0.82_f64 + (idx as f64 * 0.01_f64),
+                    metadata.to_string(),
+                    created_at
+                ],
+            )?;
+        }
+    }
+
+    // 8) Audit log entries covering major modules (skip if already sufficiently populated).
+    let existing_audit: i32 = conn.query_row("SELECT COUNT(*) FROM audit_logs", [], |r| r.get(0))?;
+    if existing_audit < 20 {
+        let mut admin_ids: Vec<(String, String)> = conn
+            .prepare("SELECT id, name FROM admins ORDER BY createdAt DESC, name ASC")?
+            .query_map([], |r| Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?)))?
+            .collect::<Result<Vec<_>, _>>()?;
+        if admin_ids.is_empty() {
+            admin_ids.push((gen_id(), "System".to_string()));
+        }
+        let employee_ids: Vec<String> = conn
+            .prepare("SELECT id FROM employees ORDER BY name LIMIT 5")?
+            .query_map([], |r| r.get(0))?
+            .collect::<Result<Vec<_>, _>>()?;
+        let zone_ids_for_audit: Vec<String> = conn
+            .prepare("SELECT id FROM zones ORDER BY name LIMIT 5")?
+            .query_map([], |r| r.get(0))?
+            .collect::<Result<Vec<_>, _>>()?;
+        let schedule_ids_for_audit: Vec<String> = conn
+            .prepare("SELECT id FROM schedules ORDER BY name LIMIT 5")?
+            .query_map([], |r| r.get(0))?
+            .collect::<Result<Vec<_>, _>>()?;
+        let recipient_ids: Vec<String> = conn
+            .prepare("SELECT id FROM report_recipients ORDER BY createdAt DESC LIMIT 5")?
+            .query_map([], |r| r.get(0))?
+            .collect::<Result<Vec<_>, _>>()?;
+
+        let audit_templates: [(&str, &str, Option<&str>); 12] = [
+            ("view", "dashboard", None),
+            ("export", "access_logs", None),
+            ("view", "audit", None),
+            ("update", "employee", employee_ids.first().map(String::as_str)),
+            ("create", "zone", zone_ids_for_audit.first().map(String::as_str)),
+            ("update", "zone", zone_ids_for_audit.get(1).map(String::as_str)),
+            ("create", "schedule", schedule_ids_for_audit.first().map(String::as_str)),
+            ("update", "schedule", schedule_ids_for_audit.get(1).map(String::as_str)),
+            ("create", "report_recipient", recipient_ids.first().map(String::as_str)),
+            ("view", "reports", None),
+            ("update", "settings", None),
+            ("login", "auth", None),
+        ];
+
+        for (idx, (action, resource, resource_id)) in audit_templates.iter().enumerate() {
+            let (actor_id, actor_name) = &admin_ids[idx % admin_ids.len()];
+            let ts = (now - chrono::Duration::minutes((idx as i64 + 1) * 9)).to_rfc3339();
+            let changes = json!({
+                "_i18n": {
+                    "module": resource,
+                    "seeded": true
+                }
+            })
+            .to_string();
+            conn.execute(
+                "INSERT INTO audit_logs (id, actorId, actorType, actorName, action, resource, resourceId, description, changes, timestamp) VALUES (?1, ?2, 'admin', ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
+                params![
+                    gen_id(),
+                    actor_id,
+                    actor_name,
+                    action,
+                    resource,
+                    resource_id,
+                    format!("seed.demo.{}.{}", resource, action),
+                    changes,
+                    ts
+                ],
+            )?;
         }
     }
 

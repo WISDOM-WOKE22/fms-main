@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback, useMemo } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { apiFetch } from "@/core/api/request";
 
@@ -47,71 +47,6 @@ interface AiCamerasResponse {
   totalRecognized: number;
 }
 
-interface SystemInfo {
-  cpuModel: string;
-  cpuCores: number;
-  arch: string;
-  osName: string;
-  osVersion: string;
-  totalMemoryGB: number;
-  availableMemoryGB: number;
-  gpus: { name: string; vram: string; vendor: string }[];
-}
-
-// ── Helpers ─────────────────────────────────────────────────────────
-
-const EMPTY_SYS: SystemInfo = {
-  cpuModel: "Detecting...",
-  cpuCores: typeof navigator !== "undefined" ? navigator.hardwareConcurrency ?? 0 : 0,
-  arch: "—",
-  osName: "—",
-  osVersion: "",
-  totalMemoryGB: 0,
-  availableMemoryGB: 0,
-  gpus: [],
-};
-
-/** Stable estimate — only uses fixed hardware specs (cores, total RAM, arch, GPU).
- *  Never uses fluctuating values like available memory. */
-function estimateMaxCameras(
-  cores: number,
-  totalMemGB: number,
-  hasGpu: boolean,
-  arch: string,
-): { max: number; rating: string; color: string } | null {
-  // Don't compute until hardware data is loaded
-  if (cores === 0 && totalMemGB === 0) return null;
-
-  const isAppleSilicon = arch.includes("Apple Silicon") || arch.includes("ARM64");
-
-  // Reserve 2 cores for OS + app
-  const cpuBudget = Math.max(1, cores - 2);
-
-  // Per-camera CPU cost depends on architecture:
-  // Apple Silicon: ~0.15 core/camera (Neural Engine + CoreML offload)
-  // Discrete GPU (CUDA/DML): ~0.2 core/camera
-  // CPU only: ~0.4 core/camera
-  const coresPerCam = isAppleSilicon ? 0.15 : hasGpu ? 0.2 : 0.4;
-  const cpuMax = Math.floor(cpuBudget / coresPerCam);
-
-  // Per-camera memory cost (from total, not available — stable):
-  // Reserve 3 GB for OS + app, rest divided by per-camera cost
-  const memPerCam = isAppleSilicon ? 0.15 : hasGpu ? 0.2 : 0.25;
-  const memMax = totalMemGB > 3 ? Math.floor((totalMemGB - 3) / memPerCam) : 1;
-
-  let max = Math.min(cpuMax, memMax);
-  max = Math.max(1, Math.min(max, 200));
-
-  let rating: string;
-  let color: string;
-  if (max >= 30) { rating = "Excellent"; color = "#22c55e"; }
-  else if (max >= 15) { rating = "Good"; color = "#3b82f6"; }
-  else if (max >= 5) { rating = "Moderate"; color = "#f59e0b"; }
-  else { rating = "Limited"; color = "#ef4444"; }
-
-  return { max, rating, color };
-}
-
 function formatUptime(seconds: number): string {
   if (seconds < 60) return `${seconds}s`;
   if (seconds < 3600) return `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
@@ -126,11 +61,7 @@ const card = "rounded-2xl bg-fms-surface border border-fms-border overflow-hidde
 const cardHeader = "p-5 border-b border-fms-border bg-fms-bg-subtle/20";
 const cardTitle = "text-base font-semibold text-fms-text m-0 flex items-center gap-2";
 const cardBody = "p-5";
-const sectionLabel = "text-xs font-semibold text-fms-text-tertiary uppercase tracking-wide m-0";
-const sectionValue = "text-sm text-fms-text font-medium m-0 mt-0.5";
-const gridRow = "grid grid-cols-2 sm:grid-cols-3 gap-4";
 const pill = "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-2xl text-xs font-semibold border";
-const dot = "w-2 h-2 rounded-full";
 
 // ── Component ───────────────────────────────────────────────────────
 
@@ -166,53 +97,9 @@ function SkeletonCard({ title, rows = 3 }: { title: string; rows?: number }) {
 export default function SystemInfoCard() {
   const [aiHealth, setAiHealth] = useState<AiHealth | null>(null);
   const [aiCameras, setAiCameras] = useState<AiCamerasResponse | null>(null);
-  const [sysInfo, setSysInfo] = useState<SystemInfo>(EMPTY_SYS);
-  const [sysLoading, setSysLoading] = useState(true);
+  const [sysLoading, setSysLoading] = useState(false);
   const [statsLoading, setStatsLoading] = useState(true);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const sysLoadedRef = useRef(false);
-
-  // Load real system info from backend (native Python process with full OS access)
-  useEffect(() => {
-    if (sysLoadedRef.current) return;
-    sysLoadedRef.current = true;
-    setSysLoading(true);
-    apiFetch("/api/v1/system-info").then(r => r.json()).then((d: {
-      cpu?: { model?: string; cores?: number; arch?: string; platform?: string };
-      memory?: { totalGB?: number; availableGB?: number };
-      gpus?: { name: string; vram: string; vendor: string }[];
-      os?: { system?: string; release?: string; version?: string; machine?: string };
-    }) => {
-      const cpu = d.cpu ?? {};
-      const mem = d.memory ?? {};
-      const os = d.os ?? {};
-      const system = os.system ?? "";
-
-      let osName = system;
-      if (system === "Darwin") osName = "macOS";
-      else if (system === "Windows") osName = "Windows";
-      else if (system === "Linux") osName = "Linux";
-
-      let archLabel = cpu.arch ?? os.machine ?? "unknown";
-      if (archLabel === "arm64" || archLabel === "aarch64") archLabel = "ARM64";
-      if (archLabel === "x86_64" || archLabel === "AMD64") archLabel = "x86_64";
-      // Enrich for Apple Silicon
-      if (osName === "macOS" && (archLabel === "ARM64" || archLabel === "arm64")) {
-        archLabel = "ARM64 (Apple Silicon)";
-      }
-
-      setSysInfo({
-        cpuModel: cpu.model || "Unknown",
-        cpuCores: cpu.cores || navigator.hardwareConcurrency || 0,
-        arch: archLabel,
-        osName,
-        osVersion: os.release ?? "",
-        totalMemoryGB: mem.totalGB ?? 0,
-        availableMemoryGB: mem.availableGB ?? 0,
-        gpus: Array.isArray(d.gpus) ? d.gpus : [],
-      });
-    }).catch(() => {}).finally(() => setSysLoading(false));
-  }, []);
 
   // AI worker control state
   const [confirmModal, setConfirmModal] = useState<"start" | "stop" | null>(null);
@@ -220,14 +107,10 @@ export default function SystemInfoCard() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); return () => setMounted(false); }, []);
 
-  // Real-time system resource usage
-  const [sysStats, setSysStats] = useState<{ cpuPercent?: number; memoryPercent?: number; processMemoryMB?: number; activeCaptures?: number } | null>(null);
-
   // Initial load + poll every 3 seconds
   const loadData = useCallback(() => {
     apiFetch("/api/v1/face/health").then(r => r.json()).then(d => { setAiHealth(d as AiHealth); setStatsLoading(false); }).catch(() => {});
     apiFetch("/api/v1/ai/cameras/status").then(r => r.json()).then(d => setAiCameras(d as AiCamerasResponse)).catch(() => {});
-    apiFetch("/api/v1/system-stats").then(r => r.json()).then(d => { setSysStats(d as typeof sysStats); setStatsLoading(false); }).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -256,221 +139,17 @@ export default function SystemInfoCard() {
     finally { setActionLoading(false); setConfirmModal(null); }
   }, [loadData]);
 
-  const hasGpu = aiHealth?.provider ? aiHealth.provider !== "CPUExecutionProvider" : false;
-  const providerLabel = aiHealth?.provider?.replace("ExecutionProvider", "") ?? "—";
-
-  // Stable estimate — only recomputes when fixed hardware specs or GPU status change
-  const estimate = useMemo(
-    () => estimateMaxCameras(sysInfo.cpuCores, sysInfo.totalMemoryGB, hasGpu, sysInfo.arch),
-    [sysInfo.cpuCores, sysInfo.totalMemoryGB, hasGpu, sysInfo.arch]
-  );
-
   // Show skeletons while data loads
   if (sysLoading && statsLoading) {
     return (
       <>
-        <SkeletonCard title="System Hardware" rows={4} />
-        <SkeletonCard title="Real-Time Usage" rows={2} />
         <SkeletonCard title="AI Camera Workers" rows={3} />
-        <SkeletonCard title="System Compatibility" rows={3} />
       </>
     );
   }
 
   return (
     <>
-      {/* ── System Hardware ── */}
-      <section className={card}>
-        <div className={cardHeader}>
-          <h2 className={cardTitle}>
-            <span className="rounded-xl bg-fms-accent-muted p-2 text-fms-accent">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
-            </span>
-            System Hardware
-          </h2>
-        </div>
-        <div className={cardBody}>
-          <div className={gridRow}>
-            <div className="col-span-2 sm:col-span-3">
-              <p className={sectionLabel}>CPU</p>
-              <p className={sectionValue}>{sysInfo.cpuModel}</p>
-            </div>
-            <div>
-              <p className={sectionLabel}>Cores</p>
-              <p className={sectionValue}>{sysInfo.cpuCores || "—"}</p>
-            </div>
-            <div>
-              <p className={sectionLabel}>OS</p>
-              <p className={sectionValue}>{sysInfo.osName}{sysInfo.osVersion ? ` ${sysInfo.osVersion}` : ""}</p>
-            </div>
-            <div>
-              <p className={sectionLabel}>Architecture</p>
-              <p className={sectionValue}>{sysInfo.arch}</p>
-            </div>
-            {sysInfo.totalMemoryGB > 0 && (
-              <div>
-                <p className={sectionLabel}>Total Memory</p>
-                <p className={sectionValue}>{sysInfo.totalMemoryGB} GB</p>
-              </div>
-            )}
-            {sysInfo.availableMemoryGB > 0 && (
-              <div>
-                <p className={sectionLabel}>Available Memory</p>
-                <p className={sectionValue}>{sysInfo.availableMemoryGB} GB</p>
-              </div>
-            )}
-            <div>
-              <p className={sectionLabel}>AI Provider</p>
-              <p className={sectionValue}>
-                <span className={pill} style={{ borderColor: hasGpu ? "rgba(34,197,94,0.3)" : "var(--fms-border)", background: hasGpu ? "rgba(34,197,94,0.08)" : "transparent", color: hasGpu ? "#4ade80" : "var(--fms-text-secondary)" }}>
-                  <span className={dot} style={{ background: hasGpu ? "#4ade80" : "var(--fms-text-tertiary)" }} />
-                  {providerLabel}
-                </span>
-              </p>
-            </div>
-            <div>
-              <p className={sectionLabel}>Provider Mode</p>
-              <p className={sectionValue}>{aiHealth?.providerConfig ?? "—"}</p>
-            </div>
-          </div>
-
-          {/* GPU(s) detected from native OS */}
-          {sysInfo.gpus.length > 0 && (
-            <div className="mt-4 pt-4 border-t border-fms-border">
-              <p className={sectionLabel + " mb-2"}>GPU{sysInfo.gpus.length > 1 ? "s" : ""}</p>
-              <div className="space-y-2">
-                {sysInfo.gpus.map((gpu, i) => (
-                  <div key={i} className="flex items-center gap-3 px-3 py-2 rounded-xl border border-fms-border bg-fms-bg-subtle/30">
-                    <span className={dot} style={{ background: "#4ade80", flexShrink: 0 }} />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-fms-text m-0">{gpu.name}</p>
-                      <p className="text-xs text-fms-text-tertiary m-0">
-                        {gpu.vendor ? `${gpu.vendor}` : ""}
-                        {gpu.vram ? ` · ${gpu.vram}` : ""}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {aiHealth && Array.isArray(aiHealth.availableProviders) && aiHealth.availableProviders.length > 0 && (
-            <div className="mt-4 pt-4 border-t border-fms-border">
-              <p className={sectionLabel + " mb-2"}>Available Execution Providers</p>
-              <div className="flex flex-wrap gap-2">
-                {aiHealth.availableProviders.map((p) => {
-                  const isActive = Array.isArray(aiHealth.selectedProviders) && aiHealth.selectedProviders.includes(p);
-                  const label = p.replace("ExecutionProvider", "");
-                  return (
-                    <span key={p} className={pill} style={{ borderColor: isActive ? "rgba(99,102,241,0.3)" : "var(--fms-border)", background: isActive ? "rgba(99,102,241,0.08)" : "transparent", color: isActive ? "#818cf8" : "var(--fms-text-tertiary)" }}>
-                      <span className={dot} style={{ background: isActive ? "#818cf8" : "var(--fms-text-tertiary)" }} />
-                      {label}
-                    </span>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Capture backend info */}
-          {aiHealth && (
-            <div className="mt-4 pt-4 border-t border-fms-border">
-              <p className={sectionLabel + " mb-2"}>RTSP Capture Backend</p>
-              <div className={gridRow}>
-                <div>
-                  <p className="text-xs text-fms-text-tertiary m-0">Backend</p>
-                  <p className="text-sm text-fms-text font-medium m-0 mt-0.5">
-                    <span className={pill} style={{
-                      borderColor: aiHealth.gstreamerAvailable ? "rgba(34,197,94,0.3)" : "var(--fms-border)",
-                      background: aiHealth.gstreamerAvailable ? "rgba(34,197,94,0.08)" : "transparent",
-                      color: aiHealth.gstreamerAvailable ? "#4ade80" : "var(--fms-text-secondary)",
-                    }}>
-                      <span className={dot} style={{ background: aiHealth.gstreamerAvailable ? "#4ade80" : "var(--fms-text-tertiary)" }} />
-                      {aiHealth.gstreamerAvailable ? "GStreamer" : "OpenCV"}
-                    </span>
-                  </p>
-                </div>
-                {aiHealth.gstreamerProfile && aiHealth.gstreamerProfile !== "none" && (
-                  <div>
-                    <p className="text-xs text-fms-text-tertiary m-0">Pipeline Profile</p>
-                    <p className="text-sm text-fms-text font-medium m-0 mt-0.5">{aiHealth.gstreamerProfile}</p>
-                  </div>
-                )}
-                {aiHealth.captureConfig && (
-                  <div>
-                    <p className="text-xs text-fms-text-tertiary m-0">Capture Resolution</p>
-                    <p className="text-sm text-fms-text font-medium m-0 mt-0.5">
-                      {aiHealth.captureConfig.aiWidth}x{aiHealth.captureConfig.aiHeight} @ {aiHealth.captureConfig.aiFps} FPS
-                    </p>
-                  </div>
-                )}
-                {typeof aiHealth.activeCaptures === "number" && (
-                  <div>
-                    <p className="text-xs text-fms-text-tertiary m-0">Active Streams</p>
-                    <p className="text-sm text-fms-text font-medium m-0 mt-0.5">{aiHealth.activeCaptures}</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* ── Real-Time System Usage ── */}
-      <section className={card}>
-        <div className={cardHeader}>
-          <h2 className={cardTitle}>
-            <span className="rounded-xl bg-fms-accent-muted p-2 text-fms-accent">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
-            </span>
-            Real-Time Usage
-          </h2>
-        </div>
-        <div className={cardBody}>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {/* CPU usage bar */}
-            <div>
-              <p className={sectionLabel}>CPU Usage</p>
-              <div className="mt-1.5">
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 h-2.5 rounded-full bg-fms-bg-subtle overflow-hidden">
-                    <div style={{ width: `${Math.min(100, sysStats?.cpuPercent ?? 0)}%`, background: (sysStats?.cpuPercent ?? 0) > 80 ? "#f87171" : (sysStats?.cpuPercent ?? 0) > 50 ? "#fbbf24" : "#4ade80", height: "100%", borderRadius: 99, transition: "width 0.5s" }} />
-                  </div>
-                  <span className="text-sm font-semibold text-fms-text" style={{ minWidth: 40, textAlign: "right" }}>
-                    {sysStats?.cpuPercent != null ? `${sysStats.cpuPercent}%` : "—"}
-                  </span>
-                </div>
-              </div>
-            </div>
-            {/* Memory usage bar */}
-            <div>
-              <p className={sectionLabel}>Memory Usage</p>
-              <div className="mt-1.5">
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 h-2.5 rounded-full bg-fms-bg-subtle overflow-hidden">
-                    <div style={{ width: `${Math.min(100, sysStats?.memoryPercent ?? 0)}%`, background: (sysStats?.memoryPercent ?? 0) > 85 ? "#f87171" : (sysStats?.memoryPercent ?? 0) > 60 ? "#fbbf24" : "#4ade80", height: "100%", borderRadius: 99, transition: "width 0.5s" }} />
-                  </div>
-                  <span className="text-sm font-semibold text-fms-text" style={{ minWidth: 40, textAlign: "right" }}>
-                    {sysStats?.memoryPercent != null ? `${sysStats.memoryPercent}%` : "—"}
-                  </span>
-                </div>
-              </div>
-            </div>
-            {/* AI process memory */}
-            <div>
-              <p className={sectionLabel}>AI Process Memory</p>
-              <p className={sectionValue}>{sysStats?.processMemoryMB != null ? `${sysStats.processMemoryMB} MB` : "—"}</p>
-            </div>
-            {/* Active RTSP captures */}
-            <div>
-              <p className={sectionLabel}>Active RTSP Captures</p>
-              <p className={sectionValue}>{sysStats?.activeCaptures ?? 0}</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* ── AI Camera Workers ── */}
       <section className={card}>
         <div className={cardHeader}>
@@ -537,7 +216,7 @@ export default function SystemInfoCard() {
                     )}
                   </div>
                   {/* Stats */}
-                  <div className="text-right flex-shrink-0">
+                  <div className="text-right shrink-0">
                     <p className="text-xs text-fms-text-secondary m-0">
                       {cam.framesProcessed > 0 ? `${cam.framesProcessed} frames · ${cam.recognizedCount} recognized` : cam.running ? "Connecting..." : "—"}
                     </p>
@@ -557,96 +236,6 @@ export default function SystemInfoCard() {
                 </div>
               ))}
             </div>
-          )}
-        </div>
-      </section>
-
-      {/* ── System Compatibility ── */}
-      <section className={card}>
-        <div className={cardHeader}>
-          <h2 className={cardTitle}>
-            <span className="rounded-xl bg-fms-accent-muted p-2 text-fms-accent">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
-            </span>
-            System Compatibility
-          </h2>
-        </div>
-        <div className={cardBody}>
-          {estimate == null ? (
-            <p className="text-sm text-fms-text-tertiary m-0">Detecting system capabilities...</p>
-          ) : (
-          <div className={gridRow}>
-            <div>
-              <p className={sectionLabel}>Compatibility Rating</p>
-              <p className={sectionValue}>
-                <span style={{ color: estimate.color, fontWeight: 700 }}>{estimate.rating}</span>
-              </p>
-            </div>
-            <div>
-              <p className={sectionLabel}>Estimated Max Cameras</p>
-              <p className={sectionValue} style={{ fontSize: "1.25rem", fontWeight: 700, color: estimate.color }}>{estimate.max}</p>
-            </div>
-            <div>
-              <p className={sectionLabel}>GPU Acceleration</p>
-              <p className={sectionValue}>
-                <span className={pill} style={{ borderColor: hasGpu ? "rgba(34,197,94,0.3)" : "rgba(245,158,11,0.3)", background: hasGpu ? "rgba(34,197,94,0.08)" : "rgba(245,158,11,0.08)", color: hasGpu ? "#4ade80" : "#fbbf24" }}>
-                  <span className={dot} style={{ background: hasGpu ? "#4ade80" : "#fbbf24" }} />
-                  {hasGpu ? `Active (${providerLabel})` : "CPU Only"}
-                </span>
-              </p>
-            </div>
-          </div>
-          )}
-
-          <div className="mt-4 pt-4 border-t border-fms-border">
-            <p className={sectionLabel + " mb-2"}>Feature Compatibility</p>
-            {typeof aiHealth?.registeredFaces === "number" && (
-              <div className="mb-3 px-3 py-2 rounded-xl border" style={{
-                borderColor: aiHealth.registeredFaces > 0 ? "rgba(34,197,94,0.3)" : "rgba(245,158,11,0.3)",
-                background: aiHealth.registeredFaces > 0 ? "rgba(34,197,94,0.06)" : "rgba(245,158,11,0.06)",
-              }}>
-                <p className="text-sm m-0" style={{ color: aiHealth.registeredFaces > 0 ? "#4ade80" : "#fbbf24" }}>
-                  <span className="font-semibold">{aiHealth.registeredFaces}</span> registered face{aiHealth.registeredFaces !== 1 ? "s" : ""} in AI database
-                  {aiHealth.registeredFaces === 0 && (
-                    <span className="text-xs ml-2" style={{ color: "#fbbf24" }}>
-                      — Register faces on employees to enable recognition
-                    </span>
-                  )}
-                </p>
-              </div>
-            )}
-            <div className="space-y-1.5">
-              {[
-                { name: "Face Recognition (InsightFace)", ok: aiHealth?.ok ?? false },
-                { name: "YOLO Person Detection", ok: aiHealth?.yoloAvailable ?? false },
-                { name: "GPU Acceleration", ok: hasGpu },
-                { name: "GStreamer Capture (HW decode)", ok: aiHealth?.gstreamerAvailable ?? false },
-                { name: "Multi-Camera AI Workers", ok: sysInfo.cpuCores >= 4 },
-                { name: "RTSP Stream Testing (FFmpeg)", ok: true },
-              ].map((feat) => (
-                <div key={feat.name} className="flex items-center gap-2">
-                  <span style={{ width: 16, height: 16, display: "inline-flex", alignItems: "center", justifyContent: "center", borderRadius: 4, background: feat.ok ? "rgba(34,197,94,0.15)" : "rgba(245,158,11,0.15)" }}>
-                    {feat.ok ? (
-                      <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5L8 3" stroke="#4ade80" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                    ) : (
-                      <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M5 3v3m0 1.5h.005" stroke="#fbbf24" strokeWidth="1.5" strokeLinecap="round" /></svg>
-                    )}
-                  </span>
-                  <span className="text-sm text-fms-text">{feat.name}</span>
-                  <span className="text-xs text-fms-text-tertiary ml-auto">{feat.ok ? "Available" : "Unavailable"}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {estimate != null && (
-          <div className="mt-4 pt-4 border-t border-fms-border">
-            <p className="text-xs text-fms-text-tertiary m-0">
-              Estimates based on {sysInfo.cpuModel}{sysInfo.totalMemoryGB > 0 ? `, ${sysInfo.totalMemoryGB}GB total memory` : ""}{hasGpu ? `, GPU (${providerLabel})` : ""}.
-              {sysInfo.arch.includes("Apple Silicon") ? " Apple Silicon benefits from unified memory and Neural Engine acceleration via CoreML." : ""}
-              {" "}Actual performance depends on camera resolution, network latency, and recognition model complexity.
-            </p>
-          </div>
           )}
         </div>
       </section>

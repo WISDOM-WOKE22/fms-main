@@ -123,7 +123,99 @@
     "refreshLabel": "تحديث بيانات لوحة التحكم",
     "addEmployee": "إضافة موظف",
     "createZone": "إنشاء منطقة",
-    "createShift": "إنشاء وردية"
+    "createShift": "إنشاء وردية",
+    "v2": {
+      "noData": "لا توجد بيانات للعرض",
+      "unknown": "غير معروف",
+      "none": "لا يوجد",
+      "unassigned": "غير معيّن",
+      "all": "الكل",
+      "allLocations": "كل المواقع",
+      "allZones": "كل المناطق",
+      "allTypes": "كل الأنواع",
+      "allSchedules": "كل الجداول",
+      "active": "نشط",
+      "inactive": "غير نشط",
+      "people": "الأشخاص",
+      "checkIns": "تسجيلات الدخول",
+      "checkOuts": "تسجيلات الخروج",
+      "checkinsLower": "تسجيلات الدخول",
+      "onTime": "في الوقت",
+      "late": "متأخر",
+      "less": "أقل",
+      "more": "أكثر",
+      "compliancePercent": "نسبة الالتزام %",
+      "newRegistrations": "تسجيلات جديدة",
+      "noStatus247": "بدون حالة / 24/7",
+      "filters": {
+        "dateFrom": "من تاريخ",
+        "dateTo": "إلى تاريخ",
+        "location": "الموقع",
+        "zone": "المنطقة",
+        "personType": "نوع الشخص",
+        "schedule": "الجدول",
+        "status": "الحالة"
+      },
+      "shortcuts": {
+        "today": "اليوم",
+        "yesterday": "أمس",
+        "thisWeek": "هذا الأسبوع",
+        "thisMonth": "هذا الشهر",
+        "last30Days": "آخر 30 يومًا"
+      },
+      "sections": {
+        "liveOperations": "العمليات المباشرة",
+        "peopleAnalytics": "تحليلات الأشخاص",
+        "attendanceIntelligence": "ذكاء الحضور",
+        "systemHealth": "صحة النظام"
+      },
+      "kpiTotalPeople": "إجمالي الأشخاص",
+      "kpiActivePeople": "الأشخاص النشطون",
+      "kpiInactivePeople": "الأشخاص غير النشطين",
+      "kpiPersonTypes": "أنواع الأشخاص",
+      "kpiCheckInsToday": "تسجيلات الدخول اليوم",
+      "kpiCheckOutsToday": "تسجيلات الخروج اليوم",
+      "kpiLateArrivalsToday": "حالات التأخر اليوم",
+      "kpiFaceEnrolled": "المسجلون بالوجه",
+      "kpiOnTimeRateToday": "نسبة الالتزام اليوم",
+      "kpiEarlyLeavesToday": "المغادرات المبكرة اليوم",
+      "kpiOvertimeEventsToday": "حالات العمل الإضافي اليوم",
+      "kpiPendingEnrollment": "تسجيلات معلّقة",
+      "charts": {
+        "peoplePresenceByLocation": "تواجد الأشخاص حسب الموقع",
+        "attendanceStatusDistribution": "توزيع حالات الحضور",
+        "checkInOutOverTime": "نشاط تسجيل الدخول / الخروج عبر الوقت",
+        "peopleByPersonType": "الأشخاص حسب النوع",
+        "activeInactiveByPersonType": "النشط مقابل غير النشط حسب النوع",
+        "lateArrivalsTrend": "اتجاه حالات التأخر",
+        "peopleGrowthOverTime": "نمو عدد الأشخاص عبر الوقت",
+        "onTimeVsLateByPersonType": "في الوقت مقابل المتأخر حسب النوع",
+        "breakComplianceDistribution": "توزيع الالتزام بالاستراحة",
+        "checkInHeatmap": "خريطة حرارة تسجيل الدخول حسب الساعة واليوم",
+        "attendanceComplianceBySchedule": "التزام الحضور حسب الجدول",
+        "faceEnrollmentStatusBreakdown": "تفصيل حالة تسجيل الوجه",
+        "peopleByScheduleType": "الأشخاص حسب نوع الجدول",
+        "newPeopleRegisteredThisMonth": "الأشخاص الجدد المسجلون هذا الشهر (يوميًا)"
+      },
+      "attendance": {
+        "on_time": "في الوقت",
+        "late": "متأخر",
+        "early_leave": "مغادرة مبكرة",
+        "overtime": "عمل إضافي",
+        "none": "لا يوجد"
+      },
+      "breakStatus": {
+        "on_time_for_break": "في الوقت للاستراحة",
+        "late_for_break": "تأخر عن الاستراحة",
+        "returned_on_time": "عاد في الوقت",
+        "late_return": "تأخر في العودة"
+      },
+      "enrollment": {
+        "enrolled": "مسجّل",
+        "linkSentPending": "تم إرسال الرابط / معلّق",
+        "notEnrolled": "غير مسجّل"
+      }
+    }
   },
   "toast": {
     "signInSuccess": "تم تسجيل الدخول بنجاح.",

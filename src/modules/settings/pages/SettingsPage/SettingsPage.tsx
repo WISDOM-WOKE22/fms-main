@@ -1342,47 +1342,6 @@ export default function SettingsPage() {
               </div>
             </section>
 
-            <section className={pageStyles.prefCard}>
-              <div className={pageStyles.prefCardHeader}>
-                <h2 className={pageStyles.prefCardTitle}>
-                  <span className={pageStyles.prefCardTitleIcon} aria-hidden>
-                    <IconSettings className="w-5 h-5" />
-                  </span>
-                  {t("settings.preferencesStyle")}
-                </h2>
-              </div>
-              <div className={pageStyles.prefCardBody}>
-                <p className={pageStyles.prefLabel}>{t("settings.preferencesDensityLabel")}</p>
-                <div className={pageStyles.optionGroup} role="group" aria-label={t("settings.preferencesDensityLabel")}>
-                  <button
-                    type="button"
-                    role="radio"
-                    aria-checked={displayDensity === "comfortable"}
-                    className={pageStyles.optionCard}
-                    onClick={() => setDisplayDensity("comfortable")}
-                  >
-                    <div className={pageStyles.optionCardIcon} aria-hidden>
-                      <IconSettings className="w-5 h-5" />
-                    </div>
-                    <p className={pageStyles.optionCardTitle}>{t("settings.preferencesDensityComfortable")}</p>
-                    <p className={pageStyles.optionCardHint}>{t("settings.preferencesDensityComfortableHint")}</p>
-                  </button>
-                  <button
-                    type="button"
-                    role="radio"
-                    aria-checked={displayDensity === "compact"}
-                    className={pageStyles.optionCard}
-                    onClick={() => setDisplayDensity("compact")}
-                  >
-                    <div className={pageStyles.optionCardIcon} aria-hidden>
-                      <IconGrid className="w-5 h-5" />
-                    </div>
-                    <p className={pageStyles.optionCardTitle}>{t("settings.preferencesDensityCompact")}</p>
-                    <p className={pageStyles.optionCardHint}>{t("settings.preferencesDensityCompactHint")}</p>
-                  </button>
-                </div>
-              </div>
-            </section>
           </div>
         )}
 

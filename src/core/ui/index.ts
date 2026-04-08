@@ -13,3 +13,5 @@ export type { SelectProps } from "./Select";
 export { ThemeToggle } from "./ThemeToggle";
 export { CameraLivePlayer } from "./CameraLivePlayer";
 export type { PlayerState, PlayerStatus, AiDetectionResult } from "./CameraLivePlayer";
+export { ChartContainer, ChartTooltip, ChartTooltipContent } from "./chart";
+export type { ChartConfig } from "./chart";

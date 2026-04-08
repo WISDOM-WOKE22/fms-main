@@ -123,7 +123,99 @@
     "refreshLabel": "Refresh dashboard data",
     "addEmployee": "Add person",
     "createZone": "Create location",
-    "createShift": "Create schedule"
+    "createShift": "Create schedule",
+    "v2": {
+      "noData": "No data to render",
+      "unknown": "Unknown",
+      "none": "None",
+      "unassigned": "Unassigned",
+      "all": "All",
+      "allLocations": "All Locations",
+      "allZones": "All Zones",
+      "allTypes": "All Types",
+      "allSchedules": "All Schedules",
+      "active": "Active",
+      "inactive": "Inactive",
+      "people": "People",
+      "checkIns": "Check-ins",
+      "checkOuts": "Check-outs",
+      "checkinsLower": "check-ins",
+      "onTime": "On Time",
+      "late": "Late",
+      "less": "Less",
+      "more": "More",
+      "compliancePercent": "Compliance %",
+      "newRegistrations": "New Registrations",
+      "noStatus247": "No Status / 24/7",
+      "filters": {
+        "dateFrom": "Date From",
+        "dateTo": "Date To",
+        "location": "Location",
+        "zone": "Zone",
+        "personType": "Person Type",
+        "schedule": "Schedule",
+        "status": "Status"
+      },
+      "shortcuts": {
+        "today": "Today",
+        "yesterday": "Yesterday",
+        "thisWeek": "This Week",
+        "thisMonth": "This Month",
+        "last30Days": "Last 30 Days"
+      },
+      "sections": {
+        "liveOperations": "Live Operations",
+        "peopleAnalytics": "People Analytics",
+        "attendanceIntelligence": "Attendance Intelligence",
+        "systemHealth": "System Health"
+      },
+      "kpiTotalPeople": "Total People",
+      "kpiActivePeople": "Active People",
+      "kpiInactivePeople": "Inactive People",
+      "kpiPersonTypes": "Person Types",
+      "kpiCheckInsToday": "Check-ins Today",
+      "kpiCheckOutsToday": "Check-outs Today",
+      "kpiLateArrivalsToday": "Late Arrivals Today",
+      "kpiFaceEnrolled": "Face Enrolled",
+      "kpiOnTimeRateToday": "On-Time Rate Today",
+      "kpiEarlyLeavesToday": "Early Leaves Today",
+      "kpiOvertimeEventsToday": "Overtime Events Today",
+      "kpiPendingEnrollment": "Pending Enrollment",
+      "charts": {
+        "peoplePresenceByLocation": "People Presence by Location",
+        "attendanceStatusDistribution": "Attendance Status Distribution",
+        "checkInOutOverTime": "Check-in / Check-out Activity Over Time",
+        "peopleByPersonType": "People by Person Type",
+        "activeInactiveByPersonType": "Active vs. Inactive by Person Type",
+        "lateArrivalsTrend": "Late Arrivals Trend",
+        "peopleGrowthOverTime": "People Growth Over Time",
+        "onTimeVsLateByPersonType": "On-Time vs. Late by Person Type",
+        "breakComplianceDistribution": "Break Compliance Distribution",
+        "checkInHeatmap": "Check-in Heatmap by Hour and Day",
+        "attendanceComplianceBySchedule": "Attendance Compliance by Schedule",
+        "faceEnrollmentStatusBreakdown": "Face Enrollment Status Breakdown",
+        "peopleByScheduleType": "People by Schedule Type",
+        "newPeopleRegisteredThisMonth": "New People Registered This Month (Daily)"
+      },
+      "attendance": {
+        "on_time": "On Time",
+        "late": "Late",
+        "early_leave": "Early Leave",
+        "overtime": "Overtime",
+        "none": "None"
+      },
+      "breakStatus": {
+        "on_time_for_break": "On Time for Break",
+        "late_for_break": "Late for Break",
+        "returned_on_time": "Returned On Time",
+        "late_return": "Late Return"
+      },
+      "enrollment": {
+        "enrolled": "Enrolled",
+        "linkSentPending": "Link Sent / Pending",
+        "notEnrolled": "Not Enrolled"
+      }
+    }
   },
   "toast": {
     "signInSuccess": "Signed in successfully.",
